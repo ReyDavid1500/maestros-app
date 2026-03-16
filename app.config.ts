@@ -34,7 +34,6 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   plugins: [
     "expo-router",
     "expo-secure-store",
-    "expo-image",
     "expo-font",
     "expo-web-browser",
     [
