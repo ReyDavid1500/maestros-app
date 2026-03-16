@@ -48,36 +48,34 @@ export async function getServiceRequest(id: string): Promise<ServiceRequest> {
 export async function createServiceRequest(
   payload: CreateRequestFormValues & { maestroId: string; categoryId: string }
 ): Promise<ServiceRequest> {
+  // El backend espera serviceCategoryId, no categoryId
+  const { categoryId, ...rest } = payload;
   const { data } = await axiosInstance.post<ServiceRequest>(
     "/service-requests",
-    payload
+    { ...rest, serviceCategoryId: categoryId }
   );
   return data;
 }
 
 /** (MAESTRO) Acepta una solicitud pendiente */
 export async function acceptServiceRequest(id: string): Promise<ServiceRequest> {
-  const { data } = await axiosInstance.post<ServiceRequest>(
+  const { data } = await axiosInstance.put<ServiceRequest>(
     `/service-requests/${id}/accept`
   );
   return data;
 }
 
 /** (MAESTRO) Rechaza una solicitud pendiente */
-export async function rejectServiceRequest(
-  id: string,
-  reason?: string
-): Promise<ServiceRequest> {
-  const { data } = await axiosInstance.post<ServiceRequest>(
-    `/service-requests/${id}/reject`,
-    { reason }
+export async function rejectServiceRequest(id: string): Promise<ServiceRequest> {
+  const { data } = await axiosInstance.put<ServiceRequest>(
+    `/service-requests/${id}/reject`
   );
   return data;
 }
 
 /** (MAESTRO) Marca el trabajo como iniciado */
 export async function startServiceRequest(id: string): Promise<ServiceRequest> {
-  const { data } = await axiosInstance.post<ServiceRequest>(
+  const { data } = await axiosInstance.put<ServiceRequest>(
     `/service-requests/${id}/start`
   );
   return data;
@@ -85,20 +83,16 @@ export async function startServiceRequest(id: string): Promise<ServiceRequest> {
 
 /** (MAESTRO) Marca el trabajo como completado */
 export async function completeServiceRequest(id: string): Promise<ServiceRequest> {
-  const { data } = await axiosInstance.post<ServiceRequest>(
+  const { data } = await axiosInstance.put<ServiceRequest>(
     `/service-requests/${id}/complete`
   );
   return data;
 }
 
-/** (CLIENT o MAESTRO) Cancela una solicitud */
-export async function cancelServiceRequest(
-  id: string,
-  reason?: string
-): Promise<ServiceRequest> {
-  const { data } = await axiosInstance.post<ServiceRequest>(
-    `/service-requests/${id}/cancel`,
-    { reason }
+/** (CLIENT) Cancela una solicitud (solo en estado PENDING) */
+export async function cancelServiceRequest(id: string): Promise<ServiceRequest> {
+  const { data } = await axiosInstance.put<ServiceRequest>(
+    `/service-requests/${id}/cancel`
   );
   return data;
 }

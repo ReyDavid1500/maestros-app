@@ -16,12 +16,12 @@ export async function getMe(): Promise<User> {
 
 /** Actualiza nombre y teléfono del usuario autenticado */
 export async function updateMe(payload: UpdateProfileFormValues): Promise<User> {
-  const { data } = await axiosInstance.patch<User>("/users/me", payload);
+  const { data } = await axiosInstance.put<User>("/users/me", payload);
   return data;
 }
 
-/** Sube o reemplaza la foto de perfil (multipart/form-data) */
-export async function uploadAvatar(imageUri: string): Promise<User> {
+/** Sube una imagen a Azure Blob Storage y retorna la URL pública */
+export async function uploadAvatar(imageUri: string): Promise<string> {
   const formData = new FormData();
   // React Native acepta { uri, name, type } como File-like en FormData
   formData.append("file", {
@@ -29,9 +29,10 @@ export async function uploadAvatar(imageUri: string): Promise<User> {
     name: "avatar.jpg",
     type: "image/jpeg",
   } as unknown as Blob);
+  formData.append("folder", "profiles");
 
-  const { data } = await axiosInstance.post<User>("/users/me/avatar", formData, {
+  const { data } = await axiosInstance.post<{ url: string }>("/files/upload", formData, {
     headers: { "Content-Type": "multipart/form-data" },
   });
-  return data;
+  return data.url;
 }

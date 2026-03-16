@@ -16,10 +16,12 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   },
   ios: {
     supportsTablet: false,
-    bundleIdentifier: "com.maestros.app",
+    bundleIdentifier: "com.guzmantech.maestros",
+    googleServicesFile: "./GoogleService-Info.plist",
   },
   android: {
-    package: "com.maestros.app",
+    package: "com.guzmantech.maestros",
+    googleServicesFile: "./google-services.json",
     adaptiveIcon: {
       backgroundColor: "#F97316",
       foregroundImage: "./assets/android-icon-foreground.png",
@@ -54,5 +56,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     googleClientIdIos: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_IOS,
     googleClientIdAndroid: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_ANDROID,
     googleClientIdWeb: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_WEB,
+    eas: {
+      projectId: "a55826e6-f239-4a81-94c4-f22aa7ed1ebd",
+    },
   },
 });

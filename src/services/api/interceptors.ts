@@ -70,7 +70,17 @@ export function applyInterceptors(instance: AxiosInstance): void {
 
   // ── Response: manejo de errores ──────────────────────────────────────────
   instance.interceptors.response.use(
-    (response) => response,
+    (response) => {
+      // Desempaquetar ApiResponse<T> del backend: { success, data, message }
+      if (
+        response.data &&
+        typeof response.data === "object" &&
+        "success" in response.data
+      ) {
+        response.data = (response.data as { success: boolean; data: unknown }).data;
+      }
+      return response;
+    },
     async (error: AxiosError) => {
       const originalRequest = error.config as InternalAxiosRequestConfig & {
         _retry?: boolean;
@@ -108,10 +118,11 @@ export function applyInterceptors(instance: AxiosInstance): void {
           }
 
           const { data } = await instance.post<{
-            data: { accessToken: string; refreshToken: string };
+            accessToken: string;
+            refreshToken: string;
           }>("/auth/refresh", { refreshToken: storedRefreshToken });
 
-          const { accessToken, refreshToken: newRefreshToken } = data.data;
+          const { accessToken, refreshToken: newRefreshToken } = data;
           await saveTokens(accessToken, newRefreshToken);
 
           onRefreshed(accessToken);

@@ -12,7 +12,12 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": false,
+      "bundleIdentifier": "com.guzmantech.maestros",
+      "googleServicesFile": "./GoogleService-Info.plist",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -32,6 +37,13 @@
       "expo-image",
       "expo-font",
       "expo-web-browser"
-    ]
+    ],
+    "extra": {
+      "useMock": false,
+      "router": {},
+      "eas": {
+        "projectId": "a55826e6-f239-4a81-94c4-f22aa7ed1ebd"
+      }
+    }
   }
 }
