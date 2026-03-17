@@ -111,10 +111,10 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       const { default: axiosInstance } = await import(
         "@services/api/axiosInstance"
       );
-      const refreshToken = await getRefreshToken();
-      if (refreshToken) {
+      const token = await getAccessToken();
+      if (token) {
         await axiosInstance
-          .post("/auth/logout", { refreshToken })
+          .post("/auth/logout")
           .catch(() => {
             // Silenciar errores de red — el logout local siempre procede
           });

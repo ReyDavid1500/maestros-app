@@ -34,6 +34,10 @@ yarn-error.*
 .env
 .env*.local
 
+# Firebase — iOS no se sube (contiene Client ID privado)
+GoogleService-Info.plist
+# google-services.json se trackea para que EAS Build lo incluya
+
 # typescript
 *.tsbuildinfo
 

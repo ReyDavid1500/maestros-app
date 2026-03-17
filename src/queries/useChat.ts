@@ -14,9 +14,10 @@ import { queryKeys } from "@constants/queryKeys";
 import {
   listChatRooms,
   getChatMessages,
-  sendMessage,
   markRoomAsRead,
 } from "@services/api/chatApi";
+import { useChatStore } from "@stores/chatStore";
+import { useAuthStore } from "@stores/authStore";
 import type { ChatRoom, ChatMessage, PaginatedResponse } from "@types";
 
 // ─── Salas de chat ─────────────────────────────────────────────────────────────
@@ -54,10 +55,27 @@ export function useChatMessages(roomId: string) {
 
 export function useSendMessage(roomId: string) {
   const qc = useQueryClient();
+  const sendViaWs = useChatStore((s) => s.sendMessage);
+  const user = useAuthStore((s) => s.user);
+
   return useMutation({
-    mutationFn: (content: string) => sendMessage(roomId, content),
+    mutationFn: (content: string) => {
+      // Los mensajes se envían por WebSocket (STOMP); no hay endpoint REST
+      sendViaWs(roomId, content);
+      // Retornar mensaje optimista local para actualizar la UI de inmediato
+      const optimistic: ChatMessage = {
+        id: `temp-${Date.now()}`,
+        roomId,
+        senderId: user?.id ?? "",
+        senderRole: user?.role ?? "CLIENT",
+        content,
+        createdAt: new Date().toISOString(),
+        read: false,
+      };
+      return Promise.resolve(optimistic);
+    },
     onSuccess: (newMessage) => {
-      // Optimistic update: añade el mensaje al inicio de la primera página
+      // Optimistic update: añade el mensaje al final de la primera página
       qc.setQueryData<InfiniteData<PaginatedResponse<ChatMessage>>>(
         queryKeys.chat.messages(roomId),
         (old) => {

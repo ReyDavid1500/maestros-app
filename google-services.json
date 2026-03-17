@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "301145782179",
+    "project_id": "maestros-50864",
+    "storage_bucket": "maestros-50864.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:301145782179:android:5275c83de0c3c54cd1cc16",
+        "android_client_info": {
+          "package_name": "com.guzmantech.maestros"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyARRde-GVytTXwaS2nx8l28oeeQ77713Po"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

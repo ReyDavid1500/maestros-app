@@ -1,6 +1,7 @@
 import { View, Text, ScrollView, Pressable, Alert, Switch, Platform } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
 import { Avatar } from "@components/ui/Avatar";
 import { useAuth } from "@hooks/useAuth";
 import { useThemeStore } from "@stores/themeStore";
@@ -98,7 +99,7 @@ export default function ClientProfileScreen() {
           </Text>
           <Pressable
             className="mt-4 bg-primary rounded-2xl px-6 py-3 active:opacity-80"
-            onPress={() => {/* router.push("/(auth)/login") */}}
+            onPress={() => router.push("/(auth)/login")}
           >
             <Text className="text-white font-inter-semibold">Iniciar sesión</Text>
           </Pressable>

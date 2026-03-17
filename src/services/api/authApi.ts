@@ -17,6 +17,7 @@ export interface AuthTokensResponse {
   accessToken: string;
   refreshToken: string;
   user: User;
+  isNewUser: boolean;
 }
 
 export interface RefreshTokenRequest {
@@ -50,7 +51,7 @@ export async function refreshTokens(
   return data;
 }
 
-/** Invalida el refresh token en el servidor */
-export async function signOut(refreshToken: string): Promise<void> {
-  await axiosInstance.post("/auth/logout", { refreshToken });
+/** Invalida el access token en el servidor (el Bearer va en el header automáticamente) */
+export async function signOut(): Promise<void> {
+  await axiosInstance.post("/auth/logout");
 }

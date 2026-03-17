@@ -57,7 +57,7 @@ export async function createMaestroProfile(
   payload: CreateMaestroProfileFormValues
 ): Promise<MaestroProfile> {
   const { data } = await axiosInstance.post<MaestroProfile>(
-    "/maestros/me",
+    "/maestros/me/profile",
     payload
   );
   return data;
@@ -67,8 +67,8 @@ export async function createMaestroProfile(
 export async function updateMaestroProfile(
   payload: Partial<CreateMaestroProfileFormValues>
 ): Promise<MaestroProfile> {
-  const { data } = await axiosInstance.patch<MaestroProfile>(
-    "/maestros/me",
+  const { data } = await axiosInstance.put<MaestroProfile>(
+    "/maestros/me/profile",
     payload
   );
   return data;
@@ -78,8 +78,8 @@ export async function updateMaestroProfile(
 export async function setMaestroAvailability(
   isAvailable: boolean
 ): Promise<MaestroProfile> {
-  const { data } = await axiosInstance.patch<MaestroProfile>(
-    "/maestros/me/availability",
+  const { data } = await axiosInstance.put<MaestroProfile>(
+    "/maestros/me/profile",
     { isAvailable }
   );
   return data;

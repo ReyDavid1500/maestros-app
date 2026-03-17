@@ -27,23 +27,7 @@ export async function getChatMessages(
   return data;
 }
 
-/**
- * Envía un mensaje de texto.
- * En producción los mensajes se envían también por WebSocket (STOMP SEND),
- * pero este endpoint REST sirve como fallback y para persistencia inmediata.
- */
-export async function sendMessage(
-  roomId: string,
-  content: string
-): Promise<ChatMessage> {
-  const { data } = await axiosInstance.post<ChatMessage>(
-    `/chat/rooms/${roomId}/messages`,
-    { content }
-  );
-  return data;
-}
-
 /** Marca todos los mensajes no leídos de una sala como leídos */
 export async function markRoomAsRead(roomId: string): Promise<void> {
-  await axiosInstance.post(`/chat/rooms/${roomId}/read`);
+  await axiosInstance.put(`/chat/rooms/${roomId}/read`);
 }

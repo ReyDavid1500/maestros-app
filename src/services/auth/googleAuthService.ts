@@ -1,40 +1,19 @@
 /**
- * Servicio de autenticación con Google usando PKCE.
- * PKCE (Proof Key for Code Exchange) es el estándar de seguridad para OAuth
- * en aplicaciones móviles nativas — previene ataques de interceptación de código.
+ * Servicio de autenticación con Google usando expo-auth-session/providers/google.
  *
  * Flujo:
- * 1. App genera code_verifier y code_challenge (expo-auth-session lo hace automáticamente)
- * 2. Abre el navegador con la URL de Google incluyendo code_challenge
- * 3. Google redirige de vuelta con el id_token
- * 4. App envía solo el id_token al backend propio (NUNCA a Google APIs directamente)
- * 5. Backend verifica el id_token con Google y retorna access/refresh tokens propios
+ * 1. Abre el navegador con Google OAuth (useIdTokenAuthRequest maneja nonce y redirect URI)
+ * 2. Google redirige de vuelta con el id_token
+ * 3. App envía el id_token al backend propio
+ * 4. Backend verifica el id_token con Google y retorna access/refresh tokens propios
  */
 
-import * as AuthSession from "expo-auth-session";
+import * as Google from "expo-auth-session/providers/google";
 import * as WebBrowser from "expo-web-browser";
-import { Platform } from "react-native";
+import { useState, useEffect } from "react";
 
 // Necesario para que expo-auth-session complete el flujo en iOS/Android
 WebBrowser.maybeCompleteAuthSession();
-
-// ─── Configuración de Google OAuth ────────────────────────────────────────────
-
-const DISCOVERY = {
-  authorizationEndpoint: "https://accounts.google.com/o/oauth2/v2/auth",
-  tokenEndpoint: "https://oauth2.googleapis.com/token",
-};
-
-function getClientId(): string {
-  if (Platform.OS === "ios") {
-    return process.env["EXPO_PUBLIC_GOOGLE_CLIENT_ID_IOS"] ?? "";
-  }
-  if (Platform.OS === "android") {
-    return process.env["EXPO_PUBLIC_GOOGLE_CLIENT_ID_ANDROID"] ?? "";
-  }
-  // web
-  return process.env["EXPO_PUBLIC_GOOGLE_CLIENT_ID_WEB"] ?? "";
-}
 
 // ─── Hook de autenticación ────────────────────────────────────────────────────
 
@@ -48,23 +27,25 @@ export function useGoogleAuth(): {
   signInWithGoogle: () => Promise<string>;
   isLoading: boolean;
 } {
-  const redirectUri = AuthSession.makeRedirectUri({
-    scheme: "maestros", // Debe coincidir con el scheme en app.config.ts
+  const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
+    clientId: process.env["EXPO_PUBLIC_GOOGLE_CLIENT_ID_WEB"] ?? "",
+    iosClientId: process.env["EXPO_PUBLIC_GOOGLE_CLIENT_ID_IOS"] ?? "",
+    androidClientId: process.env["EXPO_PUBLIC_GOOGLE_CLIENT_ID_ANDROID"] ?? "",
   });
 
-  const [request, response, promptAsync] = AuthSession.useAuthRequest(
-    {
-      clientId: getClientId(),
-      scopes: ["openid", "email", "profile"],
-      redirectUri,
-      usePKCE: true, // PKCE activado — expo-auth-session genera code_verifier y challenge
-      responseType: AuthSession.ResponseType.IdToken,
-    },
-    DISCOVERY
-  );
+  // Timeout de seguridad: si el request no se construye en 3s, mostramos el botón igual
+  const [timedOut, setTimedOut] = useState(false);
+  useEffect(() => {
+    if (request) return;
+    const t = setTimeout(() => setTimedOut(true), 3000);
+    return () => clearTimeout(t);
+  }, [request]);
 
   // En modo mock el request no llega a construirse, pero isLoading debe ser false
-  const isLoading = process.env.EXPO_PUBLIC_USE_MOCK === "true" ? false : !request;
+  const isLoading =
+    process.env.EXPO_PUBLIC_USE_MOCK === "true"
+      ? false
+      : !request && !timedOut;
 
   const signInWithGoogle = async (): Promise<string> => {
     // En modo mock: retornar token falso sin abrir el navegador de Google
@@ -97,8 +78,6 @@ export function useGoogleAuth(): {
     return idToken;
   };
 
-  // Manejar la respuesta automática cuando el componente se monta
-  // (para casos donde el resultado llega por deep link antes de que el componente esté listo)
   void response; // La respuesta es procesada internamente por expo-auth-session
 
   return { signInWithGoogle, isLoading };
