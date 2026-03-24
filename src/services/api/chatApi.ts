@@ -18,12 +18,13 @@ export async function listChatRooms(): Promise<ChatRoom[]> {
 /** Historial de mensajes de una sala (paginado, orden DESC por defecto) */
 export async function getChatMessages(
   roomId: string,
-  params: { page?: number; size?: number } = {}
+  params: { page?: number; size?: number } = {},
 ): Promise<PaginatedResponse<ChatMessage>> {
   const { data } = await axiosInstance.get<PaginatedResponse<ChatMessage>>(
     `/chat/rooms/${roomId}/messages`,
-    { params }
+    { params },
   );
+  console.log(data);
   return data;
 }
 

@@ -46,7 +46,7 @@ export function useChatMessages(roomId: string) {
     initialPageParam: 0,
     getNextPageParam: (lastPage) =>
       lastPage.last ? undefined : lastPage.page + 1,
-    enabled: !!roomId,
+    enabled: !!roomId && roomId !== "undefined",
     staleTime: 1000 * 60, // 1 minuto — se actualiza desde WS en Phase 7
   });
 }
@@ -92,7 +92,7 @@ export function useSendMessage(roomId: string) {
               ...old.pages.slice(1),
             ],
           };
-        }
+        },
       );
       // Actualiza lastMessage en la lista de salas
       qc.setQueryData<ChatRoom[]>(queryKeys.chat.rooms, (old) => {
@@ -100,7 +100,7 @@ export function useSendMessage(roomId: string) {
         return old.map((room) =>
           room.roomId === roomId
             ? { ...room, lastMessage: newMessage, unreadCount: 0 }
-            : room
+            : room,
         );
       });
     },
@@ -117,7 +117,7 @@ export function useMarkRoomAsRead(roomId: string) {
       qc.setQueryData<ChatRoom[]>(queryKeys.chat.rooms, (old) => {
         if (!old) return old;
         return old.map((room) =>
-          room.roomId === roomId ? { ...room, unreadCount: 0 } : room
+          room.roomId === roomId ? { ...room, unreadCount: 0 } : room,
         );
       });
     },
@@ -128,7 +128,7 @@ export function useMarkRoomAsRead(roomId: string) {
 
 /** Aplana todas las páginas a un array plano de mensajes en orden cronológico */
 export function flattenMessages(
-  data: InfiniteData<PaginatedResponse<ChatMessage>> | undefined
+  data: InfiniteData<PaginatedResponse<ChatMessage>> | undefined,
 ): ChatMessage[] {
   if (!data) return [];
   // Las páginas vienen de más nuevas a más viejas; invertimos para cronológico

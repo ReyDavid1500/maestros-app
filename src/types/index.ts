@@ -110,6 +110,7 @@ export interface ServiceRequest {
   completedAt: string | null;
   cancelledAt: string | null;
   createdAt: string;
+  roomId: string | null; // set by the backend when the request is accepted
 }
 
 // ─── Rating ───────────────────────────────────────────────────────────────────

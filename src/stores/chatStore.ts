@@ -35,7 +35,7 @@ let notificationSub: StompSubscription | null = null;
  * simular mensajes entrantes sin pasar por WebSocket real).
  */
 export function getMockRoomCallback(
-  roomId: string
+  roomId: string,
 ): ((msg: ChatMessage) => void) | null {
   return roomSubscriptions.get(roomId)?.callback ?? null;
 }
@@ -66,7 +66,7 @@ interface ChatActions {
    */
   subscribeToRoom: (
     roomId: string,
-    onMessage: (msg: ChatMessage) => void
+    onMessage: (msg: ChatMessage) => void,
   ) => () => void;
   /** Cancelar la suscripción de un room */
   unsubscribeFromRoom: (roomId: string) => void;
@@ -76,7 +76,7 @@ interface ChatActions {
    */
   subscribeToNotifications: (
     userId: string,
-    onNotification: (notification: WebSocketNotification) => void
+    onNotification: (notification: WebSocketNotification) => void,
   ) => void;
 }
 
@@ -106,6 +106,27 @@ export const useChatStore = create<ChatStore>((set, get) => ({
     stompClient.onConnect = () => {
       set({ isConnected: true });
       logger.debug("[chatStore] STOMP conectado");
+
+      // Replay any subscriptions registered while the connection was being established
+      roomSubscriptions.forEach((sub, roomId) => {
+        if (!sub.stompSub && stompClient) {
+          const stompSub = stompClient.subscribe(
+            `/topic/chat/${roomId}`,
+            (frame) => {
+              try {
+                const msg = JSON.parse(frame.body) as ChatMessage;
+                sub.callback(msg);
+              } catch (e) {
+                logger.error(
+                  "[chatStore] Error parseando mensaje (replay):",
+                  e,
+                );
+              }
+            },
+          );
+          roomSubscriptions.set(roomId, { ...sub, stompSub });
+        }
+      });
     };
 
     stompClient.onDisconnect = () => {
@@ -158,25 +179,19 @@ export const useChatStore = create<ChatStore>((set, get) => ({
     set({ activeRoomId: roomId });
   },
 
-  subscribeToRoom: (
-    roomId: string,
-    onMessage: (msg: ChatMessage) => void
-  ) => {
+  subscribeToRoom: (roomId: string, onMessage: (msg: ChatMessage) => void) => {
     // Guardar callback para acceso desde el mock
     let stompSub: StompSubscription | null = null;
 
-    if (!isMock && stompClient?.active) {
-      stompSub = stompClient.subscribe(
-        `/topic/chat/${roomId}`,
-        (frame) => {
-          try {
-            const msg = JSON.parse(frame.body) as ChatMessage;
-            onMessage(msg);
-          } catch (e) {
-            logger.error("[chatStore] Error parseando mensaje:", e);
-          }
+    if (!isMock && get().isConnected && stompClient) {
+      stompSub = stompClient.subscribe(`/topic/chat/${roomId}`, (frame) => {
+        try {
+          const msg = JSON.parse(frame.body) as ChatMessage;
+          onMessage(msg);
+        } catch (e) {
+          logger.error("[chatStore] Error parseando mensaje:", e);
         }
-      );
+      });
     }
 
     roomSubscriptions.set(roomId, { callback: onMessage, stompSub });
@@ -194,7 +209,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 
   subscribeToNotifications: (
     userId: string,
-    onNotification: (notification: WebSocketNotification) => void
+    onNotification: (notification: WebSocketNotification) => void,
   ) => {
     if (isMock) return; // Mock: no hay notificaciones de servidor
     if (!stompClient?.active) {
@@ -209,14 +224,12 @@ export const useChatStore = create<ChatStore>((set, get) => ({
       `/topic/notifications/${userId}`,
       (frame) => {
         try {
-          const notification = JSON.parse(
-            frame.body
-          ) as WebSocketNotification;
+          const notification = JSON.parse(frame.body) as WebSocketNotification;
           onNotification(notification);
         } catch (e) {
           logger.error("[chatStore] Error parseando notificación:", e);
         }
-      }
+      },
     );
   },
 }));

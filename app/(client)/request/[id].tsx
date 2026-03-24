@@ -1,9 +1,20 @@
-import { View, Text, ScrollView, Pressable, Alert, Platform } from "react-native";
+import {
+  View,
+  Text,
+  ScrollView,
+  Pressable,
+  Alert,
+  Platform,
+} from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { goBack } from "@utils/navigation";
 import { StatusBar } from "expo-status-bar";
 import { Ionicons } from "@expo/vector-icons";
-import { useServiceRequest, useCancelServiceRequest } from "@queries/useServiceRequests";
+import {
+  useServiceRequest,
+  useCancelServiceRequest,
+} from "@queries/useServiceRequests";
+import { useChatRooms } from "@queries/useChat";
 import { RequestStatusBadge } from "@components/request/RequestStatusBadge";
 import { RequestTimeline } from "@components/request/RequestTimeline";
 import { Avatar } from "@components/ui/Avatar";
@@ -11,12 +22,19 @@ import { SkeletonLoader } from "@components/common/SkeletonLoader";
 import { formatDate } from "@utils/formatDate";
 import { useTheme } from "@hooks/useTheme";
 
-function RequestDetailSkeleton({ colors }: { colors: ReturnType<typeof useTheme>["colors"] }) {
+function RequestDetailSkeleton({
+  colors,
+}: {
+  colors: ReturnType<typeof useTheme>["colors"];
+}) {
   return (
     <View className="flex-1 bg-background">
       {/* Header */}
       <View className="flex-row items-center px-4 pt-14 pb-4 gap-3">
-        <View className="w-10 h-10 rounded-full" style={{ backgroundColor: colors.surface }} />
+        <View
+          className="w-10 h-10 rounded-full"
+          style={{ backgroundColor: colors.surface }}
+        />
         <SkeletonLoader width={160} height={22} borderRadius={6} />
       </View>
       <View style={{ paddingHorizontal: 20 }}>
@@ -66,6 +84,7 @@ export default function RequestDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { data: sr, isLoading, isError, refetch } = useServiceRequest(id ?? "");
   const cancelRequest = useCancelServiceRequest();
+  const { data: chatRooms } = useChatRooms();
   const { colors } = useTheme();
 
   if (isLoading) return <RequestDetailSkeleton colors={colors} />;
@@ -96,18 +115,23 @@ export default function RequestDetailScreen() {
       [
         { text: "No, mantener", style: "cancel" },
         { text: "Sí, cancelar", style: "destructive", onPress: doCancel },
-      ]
+      ],
     );
   };
 
   const handleRate = () => {
     router.push(
-      `/modal/rating?serviceRequestId=${sr.id}&maestroName=${encodeURIComponent(sr.maestro.name)}`
+      `/modal/rating?serviceRequestId=${sr.id}&maestroName=${encodeURIComponent(sr.maestro.name)}`,
     );
   };
 
   const handleChat = () => {
-    router.push(`/(client)/chat/${sr.roomId}`);
+    const roomId =
+      sr.roomId ??
+      chatRooms?.find((r) => String(r.serviceRequestId) === String(sr.id))
+        ?.roomId;
+    if (!roomId) return;
+    router.push(`/(client)/chat/${roomId}`);
   };
 
   return (
@@ -140,7 +164,11 @@ export default function RequestDetailScreen() {
         {/* Maestro + chatear */}
         <View className="bg-surface rounded-2xl p-4 mb-4">
           <View className="flex-row items-center gap-3">
-            <Avatar uri={sr.maestro.photoUrl} name={sr.maestro.name} size="md" />
+            <Avatar
+              uri={sr.maestro.photoUrl}
+              name={sr.maestro.name}
+              size="md"
+            />
             <View className="flex-1">
               <Text className="text-base font-inter-semibold text-text">
                 {sr.maestro.name}
@@ -156,8 +184,14 @@ export default function RequestDetailScreen() {
               className="flex-row items-center gap-1.5 bg-primary/15 rounded-xl px-3 py-2 active:opacity-75"
               onPress={handleChat}
             >
-              <Ionicons name="chatbubble-outline" size={16} color={colors.primary} />
-              <Text className="text-xs font-inter-medium text-primary">Chat</Text>
+              <Ionicons
+                name="chatbubble-outline"
+                size={16}
+                color={colors.primary}
+              />
+              <Text className="text-xs font-inter-medium text-primary">
+                Chat
+              </Text>
             </Pressable>
           </View>
         </View>
@@ -165,9 +199,15 @@ export default function RequestDetailScreen() {
         {/* Info de la visita */}
         <View className="bg-surface rounded-2xl p-4 mb-4 gap-3">
           <View className="flex-row items-start gap-2">
-            <Ionicons name="calendar-outline" size={16} color={colors.primary} />
+            <Ionicons
+              name="calendar-outline"
+              size={16}
+              color={colors.primary}
+            />
             <View>
-              <Text className="text-xs font-inter text-text-secondary">Fecha y hora agendada</Text>
+              <Text className="text-xs font-inter text-text-secondary">
+                Fecha y hora agendada
+              </Text>
               <Text className="text-sm font-inter-medium text-text">
                 {formatDate(sr.scheduledAt)}
               </Text>
@@ -175,9 +215,15 @@ export default function RequestDetailScreen() {
           </View>
 
           <View className="flex-row items-start gap-2">
-            <Ionicons name="location-outline" size={16} color={colors.primary} />
+            <Ionicons
+              name="location-outline"
+              size={16}
+              color={colors.primary}
+            />
             <View className="flex-1">
-              <Text className="text-xs font-inter text-text-secondary">Dirección</Text>
+              <Text className="text-xs font-inter text-text-secondary">
+                Dirección
+              </Text>
               <Text className="text-sm font-inter-medium text-text">
                 {sr.address.street} {sr.address.number}, {sr.address.city}
               </Text>
@@ -190,9 +236,15 @@ export default function RequestDetailScreen() {
           </View>
 
           <View className="flex-row items-start gap-2">
-            <Ionicons name="document-text-outline" size={16} color={colors.primary} />
+            <Ionicons
+              name="document-text-outline"
+              size={16}
+              color={colors.primary}
+            />
             <View className="flex-1">
-              <Text className="text-xs font-inter text-text-secondary">Descripción</Text>
+              <Text className="text-xs font-inter text-text-secondary">
+                Descripción
+              </Text>
               <Text className="text-sm font-inter text-text-secondary">
                 {sr.description}
               </Text>
